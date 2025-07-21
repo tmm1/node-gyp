@@ -190,7 +190,7 @@
           '-luuid.lib',
           '-lodbc32.lib',
           '-ldelayimp.lib',
-          '-l"<(node_lib_file)"'
+          '-l<(node_lib_file)'
         ],
         'msvs_disabled_warnings': [
           # warning C4251: 'node::ObjectWrap::handle_' : class 'v8::Persistent<T>'
