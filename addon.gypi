@@ -74,8 +74,18 @@
           [ 'OS=="win"', {
             'defines': [ 'HOST_BINARY=\"<(node_host_binary)<(EXECUTABLE_SUFFIX)\"', ],
             'sources': [
-              '<(node_gyp_dir)/src/win_delay_load_hook.cc',
+              '$(obj).$(TOOLSET)/$(TARGET)/<(node_gyp_dir)/src/win_delay_load_hook.cc',
             ],
+            'actions': [{
+              'action_name': 'copy win_delay_load_hook.cc',
+              'inputs': [
+                '<(node_gyp_dir)/src/win_delay_load_hook.cc',
+              ],
+              'outputs': [
+                '$(obj).$(TOOLSET)/$(TARGET)/<(node_gyp_dir)/src/win_delay_load_hook.cc',
+              ],
+              'action': ['cp', '<@(_inputs)', '<@(_outputs)'],
+            }],
             'msvs_settings': {
               'VCLinkerTool': {
                 'DelayLoadDLLs': [ '<(node_host_binary)<(EXECUTABLE_SUFFIX)' ],
@@ -179,7 +189,7 @@
           '-loleaut32.lib',
           '-luuid.lib',
           '-lodbc32.lib',
-          '-lDelayImp.lib',
+          '-ldelayimp.lib',
           '-l"<(node_lib_file)"'
         ],
         'msvs_disabled_warnings': [
