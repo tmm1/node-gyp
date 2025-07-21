@@ -971,6 +971,8 @@ $(obj).$(TOOLSET)/$(TARGET)/%%.o: $(obj)/%%%s FORCE_DO_CMD
         # Update global list of link dependencies.
         if self.type in ("static_library", "shared_library"):
             target_link_deps[qualified_target] = self.output_binary
+            if gyp.common.CrossCompileRequested():
+                target_link_deps[qualified_target] = self.output_binary.replace(".dll", ".lib")
 
         # Currently any versions have the same effect, but in future the behavior
         # could be different.
@@ -1584,6 +1586,8 @@ $(obj).$(TOOLSET)/$(TARGET)/%%.o: $(obj)/%%%s FORCE_DO_CMD
                 target_ext = ".a"
             elif self.flavor == "zos":
                 target_ext = ".x"
+            elif gyp.common.CrossCompileRequested():
+                target_ext = ".dll"
             else:
                 target_ext = ".so"
         elif self.type == "none":
@@ -1747,6 +1751,22 @@ $(obj).$(TOOLSET)/$(TARGET)/%%.o: $(obj)/%%%s FORCE_DO_CMD
                     )
             libraries = spec.get("libraries")
             if libraries:
+                # Normalize windows libraries specified in node projects, to be compatible with non-msbuild cross-compiles
+                # - projects specify i.e. "psapi.lib" w/out the -l prefix
+                # - projects use mixed case i.e "DelayImp.lib" or "Shlwapi.lib"
+                # - node.lib path is added with extra quotes
+                def normalizeWin32Library(lib):
+                    if lib.endswith('"'):
+                        return lib.replace('"', '')
+                    if not lib.startswith("-l") and lib.endswith(".lib"):
+                        return "-l"+lib.lower()
+                    if lib.endswith(".lib"):
+                        return lib.lower()
+                    if lib == "-lShlwapi": # kerberos
+                        return lib.lower()
+                    return lib
+                if gyp.common.CrossCompileRequested():
+                    libraries = [normalizeWin32Library(lib) for lib in libraries]
                 # Remove duplicate entries
                 libraries = gyp.common.uniquer(libraries)
                 if self.flavor == "mac":
